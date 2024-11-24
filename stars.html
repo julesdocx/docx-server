@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1.0, width=device-width">
+
+  <style>
+    body {
+
+    }
+    .nav_container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+
+    .nav__button {
+      background: lightpink;
+      box-shadow: 0px 0px 0px transparent;
+      border: 1px solid transparent;
+      text-shadow: 0px 0px 0px transparent;
+      padding: 6px 12px;
+      border-radius: 50px;
+      margin-right: 12px;
+    }
+
+    .nav__button:hover {
+      background-color: lightcyan;
+    }
+
+    .circle__container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 50vh;
+      margin: 0;
+    }
+
+    .circle {
+      top: 50%;
+      left: 50%;
+      margin-left: -30px;
+      border-radius: 50%;
+      transform-style: preserve-3d;
+      transform: rotateX(45deg);
+    }
+
+    .item {
+      position: absolute;
+      border-radius: 50%;
+      transform: translate(-50%, -50%); /* Center the items */
+      transition: transform 0.5s ease; /* Transition for smooth animation */
+    }
+
+    .content {
+      width: 30px;
+      height: 30px;
+      /* background-color: #3498db; */
+      border-radius: 50%;
+      text-align: center;
+      line-height: 30px;
+      color: #fff;
+      font-size: 14px;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease; /* Transition for smooth animation */
+    }
+  </style>
+</head>
+<body>
+    <div class="nav_container">
+      <button class="nav__button" onclick="rotateCounterClockwise()">Previous</button>
+      <button class="nav__button" onclick="rotateClockwise()">Next</button>
+    </div>
+    <div class="circle__container">
+        <div class="circle" id="circle">
+          <!-- Items will be dynamically added here using JavaScript -->
+        </div>
+    </div>
+
+  <script>
+    console.log(window.visualViewport.scale);
+   document.addEventListener("DOMContentLoaded", function() {
+  const circle = document.getElementById("circle");
+  let isRotating = false;
+  let totalTurns = 0;
+  let count = 8
+  let circleRadius = 200
+  let sizeAmplitude = 4
+  let sizeAddition = 5
+  const circleDivider = 1 / count
+
+  for (let i = 1; i <= count; i++) {
+    const item = document.createElement("div");
+    item.className = "item";
+
+    // Use the totalTurns with an additional offset for the initial rotation
+    const initialRotation = (circleDivider * (i + 1));
+    item.style.transform = `rotate(${initialRotation}turn) translateX(${circleRadius}px)`;
+
+    const content = document.createElement("div");
+    content.className = "content";
+    const scaleFactor = sizeAddition + sizeAmplitude * Math.sin(( (i+1) * circleDivider) * 360 / 180 * Math.PI)
+    content.style.transform = `rotate(${-circleDivider * (i + 1 )}turn) scale(${scaleFactor})`;
+
+    // Create an inline SVG element for the star
+    const starSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    starSVG.setAttribute("width", "100%");
+    starSVG.setAttribute("height", "100%");
+    starSVG.innerHTML = `
+      <polygon points="15,0 18,10 28,10 20,16 23,26 15,20 7,26 10,16 2,10 12,10" fill="pink"></polygon>
+    `;
+
+    content.appendChild(starSVG);
+
+    item.appendChild(content);
+    circle.appendChild(item);
+  }
+
+  function debounce(func, delay) {
+    let timeout;
+    return function() {
+      const context = this;
+      const args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+  }
+
+  window.rotateClockwise = debounce(function() {
+    if (!isRotating) {
+      isRotating = true;
+      totalTurns += circleDivider;
+      rotateItems(circleDivider);
+    }
+  }, 500);
+
+  window.rotateCounterClockwise = debounce(function() {
+    if (!isRotating) {
+      isRotating = true;
+      totalTurns -= circleDivider;
+      rotateItems(-circleDivider);
+    }
+  }, 500);
+
+  function rotateItems(turns) {
+    const items = document.querySelectorAll('.item');
+    let rotationsCompleted = 0;
+
+    function handleTransitionEnd() {
+      rotationsCompleted++;
+      if (rotationsCompleted === items.length) {
+        isRotating = false;
+      }
+    }
+
+    items.forEach((item, index) => {
+      item.addEventListener('transitionend', handleTransitionEnd);
+      const rotationDirection = (turns > 0) ? 1 : -1;
+      const counterRotationDirection = (turns > 0) ? -1 : 1;
+
+      item.style.transform = `rotate(${totalTurns + turns * (index + 2) * rotationDirection}turn) translateX(${circleRadius}px)`;
+      const scaleFactor = sizeAddition + sizeAmplitude * Math.sin( (totalTurns + turns * (index + 2) * rotationDirection) * 360 / 180 * Math.PI);
+      const contentRotation = (-circleDivider * (index + 2) - totalTurns);
+      item.querySelector('.content').style.transform = `rotate(${contentRotation}turn) scale(${scaleFactor})`;
+    });
+
+    setTimeout(() => {
+      isRotating = false;
+    }, 200);
+  }
+});
+  </script>
+</body>
+</html>
